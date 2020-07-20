@@ -46,7 +46,7 @@ import shutil
 import sys
 import tempfile
 import time
-
+import multiprocessing
 from version import AUTOBUILD_VERSION_STRING
 
 logger = logging.getLogger('autobuild.common')
