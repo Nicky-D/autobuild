@@ -243,6 +243,13 @@ def get_package_file(package_name, package_url, hash_algorithm='md5', expected_h
                 package_response = urllib2.urlopen(package_url, None, download_timeout_seconds)
             except urllib2.URLError as err:
                 logger.error("error: %s\n  downloading package %s" % (err, package_url))
+                if "AUTOBUILD_PKG_URL" in os.environ and package_url.startswith("file:///"):
+                    urlBase  = os.environ[ "AUTOBUILD_PKG_URL" ]
+                    if urlBase[-1] != "/":
+                        urlBase += "/"
+
+                    package_url = urlBase +  package_url.split("/")[-1]
+                    print package_url
                 package_response = None
                 cache_file = None
 

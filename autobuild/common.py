@@ -66,6 +66,10 @@ PLATFORM_COMMON    = 'common'
 
 DEFAULT_ADDRSIZE = 32
 
+if sys.platform.startswith( "linux" ):
+  DEFAULT_ADDRSIZE = 64
+  logger.info( "Setting default address size to 64 bit for Linux builds" )
+  
 # Similarly, if we have an explicit platform in the environment, keep it. We
 # used to query os.environ in establish_platform(), instead of up here. The
 # trouble was that establish_platform() *sets* these os.environ entries -- so
@@ -190,6 +194,8 @@ def establish_platform(specified_platform=None, addrsize=DEFAULT_ADDRSIZE):
     os.environ['AUTOBUILD_PLATFORM'] = Platform # for spawned commands
     os.environ['AUTOBUILD_PLATFORM_OVERRIDE'] = Platform # for recursive invocations
 
+    os.environ['AUTOBUILD_CPU_COUNT'] = str(multiprocessing.cpu_count())
+    
     logger.debug("Specified platform %s address-size %d: result %s" \
                  % (specified_platform, specified_addrsize, Platform))
     
