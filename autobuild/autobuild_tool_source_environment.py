@@ -169,7 +169,18 @@ def load_vsvars(vsver):
                                  .format(vsver, vsver))
         # If we get this far, 'where' is the output of the above
         # vswhere command. Append the rest of the directory path.
-        VCINSTALLDIR = os.path.join(where, 'VC', 'Auxiliary', 'Build')
+        VCINSTALLDIR = os.path.join(where, 'Common7', 'Tools')
+        vcvarsall_base = "vsdevcmd.bat"
+
+        # Let KeyError, if any, propagate: lack of AUTOBUILD_ADDRSIZE would be an
+        # autobuild coding error. So would any value for that variable other than
+        # what's stated below.
+        arch = {
+            '32': '-arch=x86',
+            '64': '-arch=x64',
+            }[os.environ["AUTOBUILD_ADDRSIZE"]]
+        if "AUTOBUILD_HOST_ARCH" in os.environ:
+            arch += " -host_arch=" + os.environ["AUTOBUILD_HOST_ARCH"]
 
     else:
         # Older Visual Studio versions use the VSxxxCOMNTOOLS environment
@@ -207,6 +218,17 @@ def load_vsvars(vsver):
 
         # Found VCVarsQueryRegistry.bat, run it.
         vcvars = get_vars_from_bat(VCVarsQueryRegistry)
+        vcvarsall_base = "vcvarsall.bat"
+
+        # vcvarsall.bat accepts a single argument: the target architecture, e.g.
+        # "x86" or "x64".
+        # Let KeyError, if any, propagate: lack of AUTOBUILD_ADDRSIZE would be an
+        # autobuild coding error. So would any value for that variable other than
+        # what's stated below.
+        arch = {
+            '32': 'x86',
+            '64': 'x64',
+            }[os.environ["AUTOBUILD_ADDRSIZE"]]
 
         # Then we can find %VCINSTALLDIR%vcvarsall.bat.
         try:
@@ -214,21 +236,10 @@ def load_vsvars(vsver):
         except KeyError:
             raise SourceEnvError("%s did not populate VCINSTALLDIR" % VCVarsQueryRegistry)
 
-    vcvarsall_base = "vcvarsall.bat"
     vcvarsall = os.path.join(VCINSTALLDIR, vcvarsall_base)
     if not os.path.exists(vcvarsall):
         raise SourceEnvError("%s not found at: %s (via %s)" %
                              (vcvarsall_base, VCINSTALLDIR, via))
-
-    # vcvarsall.bat accepts a single argument: the target architecture, e.g.
-    # "x86" or "x64".
-    # Let KeyError, if any, propagate: lack of AUTOBUILD_ADDRSIZE would be an
-    # autobuild coding error. So would any value for that variable other than
-    # what's stated below.
-    arch = {
-        '32': 'x86',
-        '64': 'x64',
-        }[os.environ["AUTOBUILD_ADDRSIZE"]]
     vcvars = get_vars_from_bat(vcvarsall, arch)
 
     # Now weed out of vcvars anything identical to OUR environment. Retain
